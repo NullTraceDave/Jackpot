@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BIOSA JACKPOT HUB</title>
 
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -15,24 +18,20 @@ body {
     background: linear-gradient(135deg, #0f172a, #064e3b, #0f766e);
     background-attachment: fixed;
 }
-
 .glass {
     background: rgba(255,255,255,0.85);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.2);
 }
-
 .whatsapp-float {
     position: fixed;
     bottom: 20px;
     right: 20px;
     z-index: 999;
 }
-
 .fancy-gradient {
     background: linear-gradient(135deg, #064e3b, #065f46, #022c22);
 }
-
 .chat-toggle {
     position: fixed;
     left: 20px;
@@ -45,7 +44,6 @@ body {
     cursor: pointer;
     z-index: 1000;
 }
-
 .chat-box {
     display: none;
     position: fixed;
@@ -58,7 +56,6 @@ body {
     overflow: hidden;
     z-index: 999;
 }
-
 .chat-header {
     background: #065f46;
     color: white;
@@ -66,12 +63,10 @@ body {
     text-align: center;
     font-size: 12px;
 }
-
 .chat-input {
     display: flex;
     border-top: 1px solid #eee;
 }
-
 .chat-input input {
     flex: 1;
     padding: 8px;
@@ -79,7 +74,6 @@ body {
     outline: none;
     font-size: 12px;
 }
-
 .chat-input button {
     background: #065f46;
     color: white;
@@ -95,14 +89,13 @@ body {
     <h1 class="text-3xl font-black tracking-widest uppercase">
         BIOSA × EMT JACKPOT HUB
     </h1>
+    <p id="db-indicator" class="text-[10px] opacity-50 italic">System: Connecting...</p>
 </div>
 
 <main class="max-w-xl mx-auto p-4">
 
 <div class="glass text-center p-4 rounded-2xl shadow mt-4">
-    <p class="text-xs font-bold uppercase text-green-700 tracking-widest">
-        Live Players Online
-    </p>
+    <p class="text-xs font-bold uppercase text-green-700 tracking-widest">Live Players Online</p>
     <h2 id="livePlayers" class="text-3xl font-black text-slate-800">0</h2>
 </div>
 
@@ -117,10 +110,7 @@ body {
 <div class="glass p-6 rounded-2xl shadow-xl mt-5">
     <input id="nickname" class="w-full p-3 border rounded-xl mb-3" placeholder="Nickname (Required)">
     <input id="email" class="w-full p-3 border rounded-xl mb-3" placeholder="Email (Required)">
-
-    <button onclick="pay()" class="w-full bg-green-700 text-white p-3 rounded-xl font-bold shadow-lg">
-        PAY ₦100 & GET CODE
-    </button>
+    <button onclick="pay()" class="w-full bg-green-700 text-white p-3 rounded-xl font-bold shadow-lg">PAY ₦100 & GET CODE</button>
 </div>
 
 <div id="codeBox" class="hidden bg-green-600 text-white p-5 rounded-2xl mt-5 text-center shadow-lg">
@@ -131,25 +121,19 @@ body {
 
 <div class="glass p-6 rounded-2xl shadow-xl mt-5">
     <input id="loginCode" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter Access Code">
-    <button onclick="login()" class="w-full bg-black text-white p-3 rounded-xl font-bold">
-        LOGIN TO PLAY
-    </button>
+    <button onclick="login()" class="w-full bg-black text-white p-3 rounded-xl font-bold">LOGIN TO PLAY</button>
     <p id="loginStatus" class="mt-2 font-bold text-green-700"></p>
 </div>
 
 <div id="gameBox" class="glass p-6 rounded-2xl shadow-xl mt-5 hidden">
     <input id="guess" type="number" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter your lucky number">
-    <button onclick="submitGuess()" class="w-full bg-green-700 text-white p-3 rounded-xl font-bold">
-        SUBMIT GUESS
-    </button>
+    <button onclick="submitGuess()" class="w-full bg-green-700 text-white p-3 rounded-xl font-bold">SUBMIT GUESS</button>
 </div>
 
 <div class="glass p-6 rounded-2xl shadow-xl mt-5 border-2 border-green-600">
     <h2 class="font-bold text-center mb-3 text-green-800">CHECK PREVIOUS RESULTS</h2>
     <input id="resultCheckCode" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter Your Played Code">
-    <button onclick="checkUserResult()" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold">
-        VIEW RESULT
-    </button>
+    <button onclick="checkUserResult()" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold">VIEW RESULT</button>
     <p id="resultDisplay" class="mt-3 text-center font-bold text-slate-700"></p>
 </div>
 
@@ -161,9 +145,7 @@ body {
 </main>
 
 <a class="whatsapp-float" href="https://wa.me/2349161605444" target="_blank">
-<div style="background:#25D366;padding:12px 16px;border-radius:50px;color:white;font-weight:bold;">
-💬 WhatsApp
-</div>
+<div style="background:#25D366;padding:12px 16px;border-radius:50px;color:white;font-weight:bold;">💬 WhatsApp</div>
 </a>
 
 <div class="chat-toggle" onclick="toggleChat()">💬 Chat</div>
@@ -178,35 +160,43 @@ body {
 </div>
 
 <script>
+// --- FIREBASE INITIALIZATION ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBQDEsK-m8xMjiEksQm3cm_zUY9y2iJ5RU",
+  authDomain: "my-jackpot-2cd55.firebaseapp.com",
+  databaseURL: "https://my-jackpot-2cd55-default-rtdb.firebaseio.com",
+  projectId: "my-jackpot-2cd55",
+  storageBucket: "my-jackpot-2cd55.firebasestorage.app",
+  messagingSenderId: "747650443003",
+  appId: "1:747650443003:web:afb517a0ab3d623ddff25e"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+document.getElementById('db-indicator').innerText = "✅ System Online";
+
 const FORM = "https://formspree.io/f/xaqaeqjy";
-const WINNING_NUMBER = "77"; // Update this per session
+let WINNING_NUMBER = "77"; 
+
+// Real-time Winning Number Sync
+db.ref('settings/winningNumber').on('value', s => { if(s.val()) WINNING_NUMBER = s.val(); });
 
 let currentUser = null;
 let currentSessionHour = new Date().getHours();
 
-/* ================= LIVE PLAYERS ================= */
+/* ================= UI LOGIC ================= */
 function updateLivePlayers() {
     document.getElementById("livePlayers").innerText = 42 + Math.floor(Math.random() * 10);
 }
 setInterval(updateLivePlayers, 3000);
 updateLivePlayers();
 
-/* ================= HOURLY REAL-TIME COUNTDOWN ================= */
 function updateCountdown() {
     const now = new Date();
-    const minsRemaining = 59 - now.getMinutes();
-    const secsRemaining = 59 - now.getSeconds();
-
-    document.getElementById("mins").innerText = minsRemaining.toString().padStart(2, '0');
-    document.getElementById("secs").innerText = secsRemaining.toString().padStart(2, '0');
-    
-    // Auto-refresh logic check if hour changed
-    if (now.getHours() !== currentSessionHour) {
-        currentSessionHour = now.getHours();
-    }
+    document.getElementById("mins").innerText = (59 - now.getMinutes()).toString().padStart(2, '0');
+    document.getElementById("secs").innerText = (59 - now.getSeconds()).toString().padStart(2, '0');
 }
 setInterval(updateCountdown, 1000);
-updateCountdown();
 
 /* ================= CHAT ================= */
 let chats = JSON.parse(localStorage.getItem("jackpotChats") || "[]");
@@ -228,15 +218,13 @@ function loadChat() {
     box.innerHTML = "";
     chats.forEach(msg => {
         const p = document.createElement("p");
-        p.innerText = msg;
-        p.style.marginBottom = "6px";
-        box.appendChild(p);
+        p.innerText = msg; p.style.marginBottom = "6px"; box.appendChild(p);
     });
     box.scrollTop = box.scrollHeight;
 }
 loadChat();
 
-/* ================= PAYMENT (NO REFRESH) ================= */
+/* ================= CORE ACTIONS ================= */
 function pay() {
     const email = document.getElementById("email").value;
     const nickname = document.getElementById("nickname").value;
@@ -245,149 +233,89 @@ function pay() {
     FlutterwaveCheckout({
         public_key: "FLWPUBK_TEST-e901ddb220d390db03c72ca07954cbdf-X",
         tx_ref: "TX-" + Date.now(),
-        amount: 100,
-        currency: "NGN",
+        amount: 100, currency: "NGN",
         customer: { email, name: nickname },
         callback: function(data) {
-            if (!data || !data.transaction_id) return alert("Payment failed");
-
             const code = Math.floor(1000 + Math.random() * 9000).toString();
             const sessionHour = new Date().getHours();
 
-            // Store data for this specific session
-            localStorage.setItem("jackpotCode", code);
-            localStorage.setItem("lastPayRef", data.transaction_id);
-            localStorage.setItem("userNickname", nickname);
-            localStorage.setItem("userEmail", email);
-            localStorage.setItem("session_hour_" + code, sessionHour);
+            // SAVE TO FIREBASE & LOCAL
+            db.ref('codes/' + code).set({
+                nickname: nickname, email: email, paid: true, used: false, hour: sessionHour, ref: data.transaction_id
+            }).then(() => {
+                localStorage.setItem("jackpotCode", code);
+                localStorage.setItem("userNickname", nickname);
+                localStorage.setItem("userEmail", email);
+                localStorage.setItem("session_hour_" + code, sessionHour);
 
-            // Display code without refreshing
-            document.getElementById("codeBox").classList.remove("hidden");
-            document.getElementById("code").innerText = code;
-
-            fetch(FORM, {
-                method: "POST",
-                headers: {"Content-Type":"application/json", "Accept": "application/json"},
-                body: JSON.stringify({
-                    Submission_Type: "REGISTRATION",
-                    Nickname: nickname,
-                    Email: email,
-                    Login_Code: code,
-                    Session_Hour: sessionHour,
-                    Payment_Reference: data.transaction_id
-                })
+                document.getElementById("codeBox").classList.remove("hidden");
+                document.getElementById("code").innerText = code;
+                
+                // Formspree backup
+                fetch(FORM, {
+                    method: "POST",
+                    headers: {"Content-Type":"application/json"},
+                    body: JSON.stringify({ Nickname: nickname, Code: code, Ref: data.transaction_id })
+                });
+                alert("Payment successful! Access Code: " + code);
             });
-            alert("Payment successful! Use your code " + code + " to login now.");
         }
     });
 }
 
-/* ================= LOGIN ================= */
 function login() {
-    const input = document.getElementById("loginCode").value;
-    const saved = localStorage.getItem("jackpotCode");
-    if (input !== saved) {
-        document.getElementById("loginStatus").innerText = "Invalid code";
-        return;
-    }
-    currentUser = input;
-    document.getElementById("loginStatus").innerText = "Logged in! Submit your guess below.";
-    document.getElementById("gameBox").classList.remove("hidden");
+    const input = document.getElementById("loginCode").value.trim();
+    db.ref('codes/' + input).once('value').then(s => {
+        const d = s.val();
+        if(d && d.paid) {
+            if(d.used) return alert("This code has already been used!");
+            currentUser = input;
+            document.getElementById("loginStatus").innerText = "Welcome, " + d.nickname;
+            document.getElementById("gameBox").classList.remove("hidden");
+        } else { alert("Invalid or unpaid code."); }
+    });
 }
 
-/* ================= SUBMIT GUESS ================= */
 function submitGuess() {
-    const guessValue = document.getElementById("guess").value;
-    const nickname = localStorage.getItem("userNickname") || "Guest";
-    const email = localStorage.getItem("userEmail") || "No Email";
-    const payRef = localStorage.getItem("lastPayRef") || "No Ref";
+    const val = document.getElementById("guess").value;
+    if(!currentUser || !val) return alert("Login first");
 
-    if (!currentUser) return alert("Login first");
-    if (!guessValue) return alert("Enter a guess");
+    db.ref('codes/' + currentUser).once('value').then(s => {
+        if(s.val().used) return alert("Vote already cast!");
+        
+        let winStatus = (val === WINNING_NUMBER) ? "WINNER" : "NOT A MATCH";
+        localStorage.setItem("result_" + currentUser, winStatus);
 
-    let usedGuesses = JSON.parse(localStorage.getItem("usedGuesses") || "[]");
-    const key = currentUser + "-" + guessValue;
-
-    if (usedGuesses.includes(key)) {
-        alert("This code has already submitted a guess.");
-        return;
-    }
-
-    let winStatus = (guessValue === WINNING_NUMBER) ? "WINNER" : "NOT A MATCH";
-    
-    // Store result locally for the "Check Result" feature
-    localStorage.setItem("result_" + currentUser, winStatus);
-
-    fetch(FORM, {
-        method: "POST",
-        headers: {"Content-Type":"application/json", "Accept": "application/json"},
-        body: JSON.stringify({
-            _status: winStatus, 
-            Submission_Type: "JACKPOT GUESS",
-            Nickname: nickname,
-            User_Email: email,
-            Used_Access_Code: currentUser,
-            SUBMITTED_GUESS: guessValue,
-            Timestamp: new Date().toLocaleString()
-        })
-    }).then(response => {
-        if(response.ok) {
-            usedGuesses.push(key);
-            localStorage.setItem("usedGuesses", JSON.stringify(usedGuesses));
+        db.ref('codes/' + currentUser).update({ used: true, guess: val, result: winStatus })
+        .then(() => {
             alert("Guess submitted successfully!");
-            document.getElementById("gameBox").classList.add("hidden");
-            document.getElementById("loginStatus").innerText = "Guess Submitted. Check back next hour for results!";
-        }
+            location.reload();
+        });
     });
 }
 
-/* ================= CHECK RESULT LOGIC ================= */
 function checkUserResult() {
-    const checkCode = document.getElementById("resultCheckCode").value;
-    const resultDisplay = document.getElementById("resultDisplay");
+    const checkCode = document.getElementById("resultCheckCode").value.trim();
+    const display = document.getElementById("resultDisplay");
     
-    if (!checkCode) return alert("Please enter your code");
-
-    const playedHour = localStorage.getItem("session_hour_" + checkCode);
-    const result = localStorage.getItem("result_" + checkCode);
-    const currentHour = new Date().getHours();
-
-    if (!playedHour || !result) {
-        resultDisplay.innerText = "❌ Code not found or no guess submitted.";
-        return;
-    }
-
-    // Restriction: Cannot view result during the same hour played
-    if (currentHour == playedHour) {
-        resultDisplay.innerText = "⏳ Session still live. Results reveal when the timer hits zero!";
-        resultDisplay.className = "mt-3 text-center font-bold text-orange-600";
-    } else {
-        if (result === "WINNER") {
-            resultDisplay.innerText = "🎉 CONGRATULATIONS! You won the Jackpot!";
-            resultDisplay.className = "mt-3 text-center font-bold text-green-600";
+    db.ref('codes/' + checkCode).once('value').then(s => {
+        const d = s.val();
+        if(!d || !d.used) return alert("No result found.");
+        
+        const currentHour = new Date().getHours();
+        if (currentHour == d.hour) {
+            display.innerText = "⏳ Session still live. Results reveal next hour!";
+            display.className = "mt-3 text-center font-bold text-orange-600";
         } else {
-            resultDisplay.innerText = "📉 Not a match this time. Better luck next hour!";
-            resultDisplay.className = "mt-3 text-center font-bold text-red-600";
+            display.innerText = d.result === "WINNER" ? "🎉 WINNER!" : "📉 No match.";
+            display.className = "mt-3 text-center font-bold " + (d.result === "WINNER" ? "text-green-600" : "text-red-600");
         }
-    }
-}
-
-/* ================= WINNERS BOARD ================= */
-const winners = [
-    { name: "BIOSA-4821", prize: "₦2000" },
-    { name: "EMT-1103", prize: "₦1500" }
-];
-function loadBoard() {
-    const box = document.getElementById("board");
-    box.innerHTML = "";
-    winners.forEach(w => {
-        const p = document.createElement("p");
-        p.className = "border-b py-2 text-sm";
-        p.innerText = `🏆 ${w.name} - ${w.prize}`;
-        box.appendChild(p);
     });
 }
-loadBoard();
+
+const winners = [{ name: "BIOSA-4821", prize: "₦2000" }, { name: "EMT-1103", prize: "₦1500" }];
+document.getElementById("board").innerHTML = winners.map(w => `<p class="border-b py-2 text-sm">🏆 ${w.name} - ${w.prize}</p>`).join("");
 </script>
 </body>
-</html>
+    </html>
+    
