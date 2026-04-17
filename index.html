@@ -10,7 +10,6 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://checkout.flutterwave.com/v3.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 body {
@@ -24,17 +23,9 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.2);
 }
-.whatsapp-float {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999;
-}
 .fancy-gradient {
     background: linear-gradient(135deg, #064e3b, #065f46, #022c22);
 }
-
-/* SIDE MENU STYLES */
 #sidebar {
     position: fixed;
     top: 0;
@@ -45,55 +36,17 @@ body {
     color: white;
     transition: 0.3s ease;
     z-index: 2000;
-    box-shadow: 10px 0 20px rgba(0,0,0,0.4);
 }
 #sidebar.active { left: 0; }
-.menu-item {
-    padding: 15px 25px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    cursor: pointer;
-}
-.menu-item:hover { background: #065f46; }
-
-.chat-toggle {
-    position: fixed;
-    left: 20px;
-    bottom: 20px;
-    background: #065f46;
-    color: white;
-    padding: 10px 14px;
-    border-radius: 999px;
-    font-size: 12px;
-    cursor: pointer;
-    z-index: 1000;
-}
-.chat-box {
-    display: none;
-    position: fixed;
-    left: 20px;
-    bottom: 70px;
-    width: 260px;
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    overflow: hidden;
-    z-index: 999;
-}
-.chat-header { background: #065f46; color: white; padding: 8px; text-align: center; font-size: 12px; }
-.chat-input { display: flex; border-top: 1px solid #eee; }
-.chat-input input { flex: 1; padding: 8px; border: none; outline: none; font-size: 12px; }
-.chat-input button { background: #065f46; color: white; border: none; padding: 8px 10px; }
+.menu-item { padding: 15px 25px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
 </style>
 </head>
 
 <body>
 
 <div id="sidebar">
-    <div class="p-6 text-xl font-black border-b border-white/10 uppercase tracking-tighter">Jackpot Menu</div>
+    <div class="p-6 text-xl font-black border-b border-white/10 uppercase">Jackpot Menu</div>
     <div class="menu-item" onclick="showView('play')">🕹️ Play Game</div>
-    <div class="menu-item" onclick="showView('whitepaper')">📄 White Paper</div>
-    <div class="menu-item" onclick="showView('about')">🏢 About BIOSA</div>
-    <div class="menu-item" onclick="showView('contact')">📞 Contact Us</div>
     <div class="p-6 mt-10">
         <button onclick="toggleMenu()" class="w-full bg-red-800/50 py-2 rounded text-xs">CLOSE MENU</button>
     </div>
@@ -108,11 +61,6 @@ body {
 <main class="max-w-xl mx-auto p-4">
 
     <div id="play-view" class="view-container">
-        <div class="glass text-center p-4 rounded-2xl shadow mt-4">
-            <p class="text-xs font-bold uppercase text-green-700 tracking-widest">Live Players Online</p>
-            <h2 id="livePlayers" class="text-3xl font-black text-slate-800">0</h2>
-        </div>
-
         <div class="glass text-slate-900 p-5 rounded-2xl text-center shadow-lg mt-4">
             <p class="text-[10px] font-bold text-green-700 mb-1">SESSION ENDS IN:</p>
             <div class="flex justify-around">
@@ -122,8 +70,8 @@ body {
         </div>
 
         <div class="glass p-6 rounded-2xl shadow-xl mt-5">
-            <input id="nickname" class="w-full p-3 border rounded-xl mb-3" placeholder="Nickname (Required)">
-            <input id="email" class="w-full p-3 border rounded-xl mb-3" placeholder="Email (Required)">
+            <input id="nickname" class="w-full p-3 border rounded-xl mb-3" placeholder="Nickname">
+            <input id="email" class="w-full p-3 border rounded-xl mb-3" placeholder="Email">
             <button onclick="pay()" class="w-full bg-green-700 text-white p-3 rounded-xl font-bold shadow-lg">PAY ₦100 & GET CODE</button>
         </div>
 
@@ -132,17 +80,10 @@ body {
             <h1 id="code" class="text-4xl font-black"></h1>
         </div>
 
-        <div class="glass p-6 rounded-2xl shadow-xl mt-5 border-2 border-slate-400">
-            <h2 class="font-bold text-center mb-3 text-slate-800 italic uppercase text-xs">Forgot your code?</h2>
-            <input id="searchRef" class="w-full p-3 border rounded-xl mb-3 text-sm" placeholder="Enter Payment Reference">
-            <button onclick="retrieveLostCode()" class="w-full bg-slate-600 text-white p-2 rounded-xl font-bold text-sm">RETRIEVE CODE</button>
-            <p id="retrievalDisplay" class="mt-3 text-center font-bold text-slate-700 text-sm"></p>
-        </div>
-
         <div class="glass p-6 rounded-2xl shadow-xl mt-5">
             <input id="loginCode" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter Access Code">
             <button onclick="login()" class="w-full bg-black text-white p-3 rounded-xl font-bold">LOGIN TO PLAY</button>
-            <p id="loginStatus" class="mt-2 font-bold text-green-700"></p>
+            <p id="loginStatus" class="mt-2 font-bold text-green-700 text-center"></p>
         </div>
 
         <div id="gameBox" class="glass p-6 rounded-2xl shadow-xl mt-5 hidden">
@@ -152,48 +93,16 @@ body {
 
         <div class="glass p-6 rounded-2xl shadow-xl mt-5 border-2 border-green-600">
             <h2 class="font-bold text-center mb-3 text-green-800 uppercase text-sm">Check Results</h2>
-            <p class="text-[10px] text-center text-slate-500 mb-3">Note: Results are only revealed after the hour ends.</p>
+            <p class="text-[10px] text-center text-slate-500 mb-3">Results reveal only after the hour ends.</p>
             <input id="resultCheckCode" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter Your Played Code">
             <button onclick="checkUserResult()" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold">VIEW RESULT</button>
             <div id="resultDisplay" class="mt-3 text-center"></div>
         </div>
-
-        <div class="glass p-5 rounded-2xl shadow-xl mt-5">
-            <h2 class="font-bold mb-3 text-xs uppercase">Winners Board</h2>
-            <div id="board"></div>
-        </div>
     </div>
-
-    <div id="whitepaper-view" class="view-container hidden glass p-8 rounded-2xl mt-4">
-        <h2 class="text-2xl font-black mb-4 uppercase">White Paper</h2>
-        <p class="text-sm leading-relaxed mb-4">The BIOSA Jackpot Hub is a transparent student-led initiative. 70% of proceeds go to the prize pool, while 30% supports departmental projects.</p>
-    </div>
-
-    <div id="about-view" class="view-container hidden glass p-8 rounded-2xl mt-4">
-        <h2 class="text-2xl font-black mb-4 uppercase">About Us</h2>
-        <p class="text-sm">Created by the Biology Students Association (BIOSA).</p>
-    </div>
-
-    <div id="contact-view" class="view-container hidden glass p-8 rounded-2xl mt-4 text-center">
-        <h2 class="text-2xl font-black mb-4 uppercase">Contact Us</h2>
-        <p class="font-bold text-green-800 mt-2">+234 916 160 5444</p>
-    </div>
-
 </main>
 
-<a class="whatsapp-float" href="https://wa.me/2349161605444" target="_blank">
-<div style="background:#25D366;padding:12px 16px;border-radius:50px;color:white;font-weight:bold;font-size:12px;">💬 WhatsApp</div>
-</a>
-
-<div class="chat-toggle" onclick="toggleChat()">💬 Chat</div>
-<div class="chat-box" id="chatBox">
-    <div class="chat-header">LIVE CHAT</div>
-    <div id="chatMessages" style="height:180px;overflow-y:auto;padding:10px;font-size:12px;"></div>
-    <div class="chat-input"><input id="chatInput" placeholder="Message..."><button onclick="sendChat()">Send</button></div>
-</div>
-
 <script>
-// --- CONFIGURATION ---
+// --- CONFIG ---
 const firebaseConfig = {
   apiKey: "AIzaSyBQDEsK-m8xMjiEksQm3cm_zUY9y2iJ5RU",
   authDomain: "my-jackpot-2cd55.firebaseapp.com",
@@ -212,22 +121,19 @@ const TG_TOKEN = "8695421369:AAHh_w4uqyikxPHLQ4At-AyiZnSnEJTm0eU";
 const TG_CHAT = "1162133317";
 
 let WINNING_NUMBER = null; 
-db.ref('settings/winningNumber').on('value', s => { 
-    if(s.val()) WINNING_NUMBER = s.val().toString(); 
-});
+db.ref('settings/winningNumber').on('value', s => { if(s.val()) WINNING_NUMBER = s.val().toString(); });
 
 let currentUser = null;
 
-// HELPER: Generates a Session ID based on Date and Hour (WAT/Nigeria)
+// TIME HELPER: Returns YYYY-MM-DD-HH (Nigeria Time)
 function getSessionID() {
     const now = new Date();
-    // Forces Nigeria Timezone
     const wat = new Date(now.toLocaleString("en-US", {timeZone: "Africa/Lagos"}));
     const y = wat.getFullYear();
     const m = (wat.getMonth() + 1).toString().padStart(2, '0');
     const d = wat.getDate().toString().padStart(2, '0');
     const h = wat.getHours().toString().padStart(2, '0');
-    return `${y}-${m}-${d}-${h}`; // Example: 2024-04-17-08
+    return `${y}-${m}-${d}-${h}`;
 }
 
 function notifyTG(msg) {
@@ -239,33 +145,19 @@ function notifyTG(msg) {
 }
 
 function toggleMenu() { document.getElementById("sidebar").classList.toggle("active"); }
-function showView(viewId) {
-    document.querySelectorAll('.view-container').forEach(v => v.classList.add('hidden'));
-    document.getElementById(viewId + '-view').classList.remove('hidden');
-    toggleMenu();
-}
+function showView(v) { document.querySelectorAll('.view-container').forEach(x => x.classList.add('hidden')); document.getElementById(v + '-view').classList.remove('hidden'); toggleMenu(); }
 
-/* UI LOGIC */
-setInterval(() => { document.getElementById("livePlayers").innerText = 42 + Math.floor(Math.random() * 10); }, 3000);
 setInterval(() => {
     const now = new Date();
     document.getElementById("mins").innerText = (59 - now.getMinutes()).toString().padStart(2, '0');
     document.getElementById("secs").innerText = (59 - now.getSeconds()).toString().padStart(2, '0');
 }, 1000);
 
-/* CHAT */
-function toggleChat() { let b = document.getElementById("chatBox"); b.style.display = (b.style.display === "block") ? "none" : "block"; }
-function sendChat() {
-    let i = document.getElementById("chatInput"); if (!i.value.trim()) return;
-    let p = document.createElement("p"); p.innerText = "👤 " + i.value; p.style.fontSize="11px";
-    document.getElementById("chatMessages").appendChild(p); i.value = "";
-}
-
-/* CORE ACTIONS */
+// CORE FUNCTIONS
 function pay() {
     const email = document.getElementById("email").value;
     const nickname = document.getElementById("nickname").value;
-    if (!email || !nickname) return alert("Required fields missing");
+    if (!email || !nickname) return alert("Fill all fields");
 
     FlutterwaveCheckout({
         public_key: "FLWPUBK_TEST-e901ddb220d390db03c72ca07954cbdf-X",
@@ -274,23 +166,21 @@ function pay() {
         customer: { email, name: nickname },
         callback: function(data) {
             const code = Math.floor(1000 + Math.random() * 9000).toString();
-            const session = getSessionID(); 
+            const session = getSessionID();
 
             document.getElementById("codeBox").classList.remove("hidden");
             document.getElementById("code").innerText = code;
-            alert("Success! Copy your code: " + code);
 
             db.ref('codes/' + code).set({ 
                 nickname, 
                 email, 
                 paid: true, 
                 used: false, 
-                sessionID: session, // Locks this code to the current hour and date
+                sessionID: session, // NEW SESSION KEY
                 ref: data.transaction_id 
-            })
-            .then(() => {
+            }).then(() => {
                 notifyTG(`💰 NEW PAYMENT\nUser: ${nickname}\nCode: ${code}\nSession: ${session}`);
-                fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Status: "PAID", Nickname: nickname, Access_Code: code, Ref: data.transaction_id }) });
+                fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Nickname: nickname, Code: code, Session: session }) });
             });
         }
     });
@@ -302,15 +192,15 @@ function login() {
         const d = s.val();
         if(d && d.paid && !d.used) {
             currentUser = input;
-            document.getElementById("loginStatus").innerText = "Welcome, " + d.nickname;
+            document.getElementById("loginStatus").innerText = "Logged in: " + d.nickname;
             document.getElementById("gameBox").classList.remove("hidden");
-        } else { alert("Code invalid or already used."); }
+        } else { alert("Invalid or used code."); }
     });
 }
 
 function submitGuess() {
     const val = document.getElementById("guess").value;
-    if(!currentUser || !val || !WINNING_NUMBER) return alert("Error - try again");
+    if(!currentUser || !val || !WINNING_NUMBER) return alert("Error");
 
     db.ref('codes/' + currentUser).once('value').then(s => {
         const d = s.val();
@@ -321,10 +211,9 @@ function submitGuess() {
             guess: val, 
             result: status, 
             revealedWinNum: WINNING_NUMBER 
-        })
-        .then(() => {
-            notifyTG(`🎯 GUESS LOGGED\nUser: ${d.nickname}\nGuess: ${val}\nCode: ${currentUser}`);
-            alert("Guess Logged!"); location.reload();
+        }).then(() => {
+            notifyTG(`🎯 GUESS\nUser: ${d.nickname}\nGuess: ${val}\nSession: ${d.sessionID}`);
+            location.reload();
         });
     });
 }
@@ -335,38 +224,29 @@ function checkUserResult() {
     
     db.ref('codes/' + checkCode).once('value').then(s => {
         const d = s.val();
-        if(!d || !d.used) return alert("Result not found or you haven't played yet.");
+        if(!d || !d.used) return alert("No result found.");
 
         const currentSession = getSessionID();
         
-        // --- HOURLY LOCKING LOGIC ---
-        // If the Session ID on the code (YYYY-MM-DD-HH) matches the current one, it's blocked.
+        // Use the sessionID stored during payment to check if it's the current hour
         if (currentSession === d.sessionID) {
             display.innerHTML = `
                 <div class="bg-amber-100 p-4 rounded-xl border border-amber-300">
-                    <p class="font-bold text-amber-800">⏳ SESSION IN PROGRESS</p>
-                    <p class="text-[11px] text-amber-700 mt-1">This session is still active. Results for this specific hour will be revealed once the next hour begins.</p>
-                </div>
-            `;
+                    <p class="font-bold text-amber-800">⏳ SESSION LIVE</p>
+                    <p class="text-[11px] text-amber-700">Results for session ${d.sessionID} unlock next hour.</p>
+                </div>`;
         } else {
-            // Reveal result once the hour has changed
             const color = d.result === "WINNER" ? "text-green-600" : "text-red-600";
-            const winNum = d.revealedWinNum || "Not Set";
-            
             display.innerHTML = `
-                <div class="bg-white p-4 rounded-xl shadow-inner border border-slate-200">
-                    <p class="font-black text-2xl ${color} mb-1">${d.result}</p>
-                    <p class="text-sm text-slate-500">Your Guess: <span class="font-bold text-slate-800">${d.guess}</span></p>
-                    <p class="text-sm text-slate-500">Correct Number: <span class="font-bold text-green-700">${winNum}</span></p>
-                    <p class="text-[9px] text-slate-400 mt-2 uppercase italic">Session ID: ${d.sessionID}</p>
-                </div>
-            `;
+                <div class="bg-white p-4 rounded-xl shadow border border-slate-200">
+                    <p class="font-black text-2xl ${color}">${d.result}</p>
+                    <p class="text-sm">Your Guess: <b>${d.guess}</b></p>
+                    <p class="text-sm">Winning Number: <b>${d.revealedWinNum}</b></p>
+                    <p class="text-[9px] text-slate-400 mt-2">SESSION ID: ${d.sessionID}</p>
+                </div>`;
         }
     });
 }
-
-const winners = [{ name: "BIOSA-4821", prize: "₦2000" }, { name: "EMT-1103", prize: "₦1500" }];
-document.getElementById("board").innerHTML = winners.map(w => `<p class="border-b py-2 text-[10px]">🏆 ${w.name} - ${w.prize}</p>`).join("");
 </script>
 </body>
 </html>
