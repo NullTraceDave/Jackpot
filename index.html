@@ -24,11 +24,17 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.2);
 }
+.whatsapp-float {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999;
+}
 .fancy-gradient {
     background: linear-gradient(135deg, #064e3b, #065f46, #022c22);
 }
 
-/* SIDEBAR STYLES */
+/* SIDE MENU STYLES */
 #sidebar {
     position: fixed;
     top: 0;
@@ -37,24 +43,22 @@ body {
     height: 100%;
     background: #022c22;
     color: white;
-    transition: 0.3s;
+    transition: 0.3s ease;
     z-index: 2000;
-    box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    box-shadow: 10px 0 20px rgba(0,0,0,0.4);
 }
 #sidebar.active { left: 0; }
 .menu-item {
     padding: 15px 25px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
     cursor: pointer;
-    transition: 0.2s;
 }
 .menu-item:hover { background: #065f46; }
 
-/* CHAT STUFF */
 .chat-toggle {
     position: fixed;
-    right: 20px;
-    bottom: 80px;
+    left: 20px;
+    bottom: 20px;
     background: #065f46;
     color: white;
     padding: 10px 14px;
@@ -66,8 +70,8 @@ body {
 .chat-box {
     display: none;
     position: fixed;
-    right: 20px;
-    bottom: 130px;
+    left: 20px;
+    bottom: 70px;
     width: 260px;
     background: white;
     border-radius: 15px;
@@ -75,39 +79,35 @@ body {
     overflow: hidden;
     z-index: 999;
 }
-.whatsapp-float {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 999;
-}
+.chat-header { background: #065f46; color: white; padding: 8px; text-align: center; font-size: 12px; }
+.chat-input { display: flex; border-top: 1px solid #eee; }
+.chat-input input { flex: 1; padding: 8px; border: none; outline: none; font-size: 12px; }
+.chat-input button { background: #065f46; color: white; border: none; padding: 8px 10px; }
 </style>
 </head>
 
 <body>
 
 <div id="sidebar">
-    <div class="p-6 text-xl font-black border-b border-white/20">MENU</div>
-    <div class="menu-item" onclick="showSection('play')">🎮 Play Jackpot</div>
-    <div class="menu-item" onclick="showSection('whitepaper')">📄 White Paper</div>
-    <div class="menu-item" onclick="showSection('about')">ℹ️ About Us</div>
-    <div class="menu-item" onclick="showSection('contact')">📞 Contact Us</div>
+    <div class="p-6 text-xl font-black border-b border-white/10 uppercase tracking-tighter">Jackpot Menu</div>
+    <div class="menu-item" onclick="showView('play')">🕹️ Play Game</div>
+    <div class="menu-item" onclick="showView('whitepaper')">📄 White Paper</div>
+    <div class="menu-item" onclick="showView('about')">🏢 About BIOSA</div>
+    <div class="menu-item" onclick="showView('contact')">📞 Contact Us</div>
     <div class="p-6 mt-10">
-        <button onclick="toggleSidebar()" class="bg-red-900 w-full py-2 rounded">Close Menu</button>
+        <button onclick="toggleMenu()" class="w-full bg-red-800/50 py-2 rounded text-xs">CLOSE MENU</button>
     </div>
 </div>
 
 <div class="fancy-gradient text-white text-center p-6 relative">
-    <button onclick="toggleSidebar()" class="absolute left-4 top-7 text-2xl">☰</button>
-    <h1 class="text-2xl font-black tracking-widest uppercase">
-        BIOSA × EMT JACKPOT HUB
-    </h1>
+    <button onclick="toggleMenu()" class="absolute left-5 top-7 text-2xl">☰</button>
+    <h1 class="text-3xl font-black tracking-widest uppercase">BIOSA × EMT</h1>
     <p id="db-indicator" class="text-[10px] opacity-50 italic">System: Connecting...</p>
 </div>
 
 <main class="max-w-xl mx-auto p-4">
 
-    <div id="play-section" class="content-section">
+    <div id="play-view" class="view-container">
         <div class="glass text-center p-4 rounded-2xl shadow mt-4">
             <p class="text-xs font-bold uppercase text-green-700 tracking-widest">Live Players Online</p>
             <h2 id="livePlayers" class="text-3xl font-black text-slate-800">0</h2>
@@ -132,6 +132,13 @@ body {
             <h1 id="code" class="text-4xl font-black"></h1>
         </div>
 
+        <div class="glass p-6 rounded-2xl shadow-xl mt-5 border-2 border-slate-400">
+            <h2 class="font-bold text-center mb-3 text-slate-800 italic uppercase text-xs">Forgot your code?</h2>
+            <input id="searchRef" class="w-full p-3 border rounded-xl mb-3 text-sm" placeholder="Enter Payment Reference">
+            <button onclick="retrieveLostCode()" class="w-full bg-slate-600 text-white p-2 rounded-xl font-bold text-sm">RETRIEVE CODE</button>
+            <p id="retrievalDisplay" class="mt-3 text-center font-bold text-slate-700 text-sm"></p>
+        </div>
+
         <div class="glass p-6 rounded-2xl shadow-xl mt-5">
             <input id="loginCode" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter Access Code">
             <button onclick="login()" class="w-full bg-black text-white p-3 rounded-xl font-bold">LOGIN TO PLAY</button>
@@ -144,43 +151,50 @@ body {
         </div>
 
         <div class="glass p-6 rounded-2xl shadow-xl mt-5 border-2 border-green-600">
-            <h2 class="font-bold text-center mb-3 text-green-800 uppercase text-sm">Check Results</h2>
+            <h2 class="font-bold text-center mb-3 text-green-800">CHECK PREVIOUS RESULTS</h2>
             <input id="resultCheckCode" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter Your Played Code">
             <button onclick="checkUserResult()" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold">VIEW RESULT</button>
             <div id="resultDisplay" class="mt-3 text-center"></div>
         </div>
+
+        <div class="glass p-5 rounded-2xl shadow-xl mt-5">
+            <h2 class="font-bold mb-3 text-xs uppercase">Winners Board</h2>
+            <div id="board"></div>
+        </div>
     </div>
 
-    <div id="whitepaper-section" class="content-section hidden glass p-8 rounded-2xl mt-4">
-        <h2 class="text-2xl font-bold mb-4">White Paper</h2>
-        <p class="text-sm leading-relaxed">This Jackpot system is designed for the BIOSA & EMT community. All winnings are managed via the BIOSA central treasury. Numbers are generated via an administrative panel and synced in real-time. Transparency is our priority.</p>
+    <div id="whitepaper-view" class="view-container hidden glass p-8 rounded-2xl mt-4">
+        <h2 class="text-2xl font-black mb-4 uppercase">White Paper</h2>
+        <p class="text-sm leading-relaxed mb-4">The BIOSA Jackpot Hub is a transparent student-led initiative. 70% of proceeds go to the prize pool, while 30% supports departmental projects.</p>
+        <p class="text-sm font-bold">Rules:</p>
+        <ul class="text-xs list-disc ml-4 mt-2">
+            <li>Numbers refresh every hour.</li>
+            <li>Double entries are blocked by the system.</li>
+        </ul>
     </div>
 
-    <div id="about-section" class="content-section hidden glass p-8 rounded-2xl mt-4">
-        <h2 class="text-2xl font-bold mb-4">About Us</h2>
-        <p class="text-sm">We are the Biology and Environmental Management and Technology students association, bringing digital innovation to our student experience.</p>
+    <div id="about-view" class="view-container hidden glass p-8 rounded-2xl mt-4">
+        <h2 class="text-2xl font-black mb-4 uppercase">About Us</h2>
+        <p class="text-sm">Created by the Biology Students Association (BIOSA) in partnership with Environmental Management Technology (EMT) to foster digital engagement.</p>
     </div>
 
-    <div id="contact-section" class="content-section hidden glass p-8 rounded-2xl mt-4 text-center">
-        <h2 class="text-2xl font-bold mb-4">Contact Us</h2>
-        <p>Support Line: +234 916 160 5444</p>
-        <p class="mt-2">Email: support@biosajackpot.com</p>
+    <div id="contact-view" class="view-container hidden glass p-8 rounded-2xl mt-4 text-center">
+        <h2 class="text-2xl font-black mb-4 uppercase">Contact Us</h2>
+        <p class="text-sm">For payment issues or sponsorship:</p>
+        <p class="font-bold text-green-800 mt-2">+234 916 160 5444</p>
     </div>
 
 </main>
 
 <a class="whatsapp-float" href="https://wa.me/2349161605444" target="_blank">
-    <div style="background:#25D366;padding:12px 16px;border-radius:50px;color:white;font-weight:bold;font-size:12px;">💬 WhatsApp</div>
+<div style="background:#25D366;padding:12px 16px;border-radius:50px;color:white;font-weight:bold;font-size:12px;">💬 WhatsApp</div>
 </a>
 
-<div class="chat-toggle" onclick="toggleChat()">Chat</div>
+<div class="chat-toggle" onclick="toggleChat()">💬 Chat</div>
 <div class="chat-box" id="chatBox">
-    <div class="bg-emerald-900 text-white p-2 text-center text-xs">LIVE CHAT</div>
-    <div id="chatMessages" style="height:150px;overflow-y:auto;padding:10px;font-size:11px;"></div>
-    <div class="flex border-t">
-        <input id="chatInput" class="flex-1 p-2 text-xs outline-none" placeholder="Message...">
-        <button onclick="sendChat()" class="bg-emerald-900 text-white px-3 py-1 text-xs">Send</button>
-    </div>
+    <div class="chat-header">LIVE CHAT</div>
+    <div id="chatMessages" style="height:180px;overflow-y:auto;padding:10px;font-size:12px;"></div>
+    <div class="chat-input"><input id="chatInput" placeholder="Message..."><button onclick="sendChat()">Send</button></div>
 </div>
 
 <script>
@@ -201,34 +215,37 @@ document.getElementById('db-indicator').innerText = "✅ System Online";
 const FORM = "https://formspree.io/f/xaqaeqjy";
 let WINNING_NUMBER = null; 
 
-// Sync Winning Number
-db.ref('settings/winningNumber').on('value', s => { if(s.val()) WINNING_NUMBER = s.val().toString(); });
+db.ref('settings/winningNumber').on('value', s => { 
+    if(s.val()) WINNING_NUMBER = s.val().toString(); 
+});
 
 let currentUser = null;
 
-/* NAVIGATION LOGIC */
-function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("active");
-}
-
-function showSection(id) {
-    document.querySelectorAll('.content-section').forEach(s => s.classList.add('hidden'));
-    document.getElementById(id + '-section').classList.remove('hidden');
-    toggleSidebar();
+// MENU NAVIGATION
+function toggleMenu() { document.getElementById("sidebar").classList.toggle("active"); }
+function showView(viewId) {
+    document.querySelectorAll('.view-container').forEach(v => v.classList.add('hidden'));
+    document.getElementById(viewId + '-view').classList.remove('hidden');
+    toggleMenu();
 }
 
 /* UI LOGIC */
-setInterval(() => {
-    document.getElementById("livePlayers").innerText = 42 + Math.floor(Math.random() * 10);
-}, 3000);
-
+setInterval(() => { document.getElementById("livePlayers").innerText = 42 + Math.floor(Math.random() * 10); }, 3000);
 setInterval(() => {
     const now = new Date();
     document.getElementById("mins").innerText = (59 - now.getMinutes()).toString().padStart(2, '0');
     document.getElementById("secs").innerText = (59 - now.getSeconds()).toString().padStart(2, '0');
 }, 1000);
 
-/* ACTIONS */
+/* CHAT */
+function toggleChat() { let b = document.getElementById("chatBox"); b.style.display = (b.style.display === "block") ? "none" : "block"; }
+function sendChat() {
+    let i = document.getElementById("chatInput"); if (!i.value.trim()) return;
+    let p = document.createElement("p"); p.innerText = "👤 " + i.value; p.style.fontSize="11px";
+    document.getElementById("chatMessages").appendChild(p); i.value = "";
+}
+
+/* CORE ACTIONS */
 function pay() {
     const email = document.getElementById("email").value;
     const nickname = document.getElementById("nickname").value;
@@ -246,9 +263,18 @@ function pay() {
             .then(() => {
                 document.getElementById("codeBox").classList.remove("hidden");
                 document.getElementById("code").innerText = code;
-                fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Status: "PAID", Nickname: nickname, Code: code }) });
+                fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Status: "PAID", Nickname: nickname, Access_Code: code, Ref: data.transaction_id }) });
             });
         }
+    });
+}
+
+function retrieveLostCode() {
+    const refInput = document.getElementById("searchRef").value.trim();
+    const display = document.getElementById("retrievalDisplay");
+    db.ref('codes').once('value').then(snap => {
+        let code = null; snap.forEach(c => { if(c.val().ref == refInput) code = c.key; });
+        display.innerText = code ? "✅ CODE: " + code : "❌ Not found";
     });
 }
 
@@ -258,26 +284,24 @@ function login() {
         const d = s.val();
         if(d && d.paid && !d.used) {
             currentUser = input;
-            document.getElementById("loginStatus").innerText = "Logged in: " + d.nickname;
+            document.getElementById("loginStatus").innerText = "Welcome, " + d.nickname;
             document.getElementById("gameBox").classList.remove("hidden");
-        } else { alert("Invalid or used code."); }
+        } else { alert("Code invalid or already used."); }
     });
 }
 
 function submitGuess() {
     const val = document.getElementById("guess").value;
-    if(!currentUser || !val || !WINNING_NUMBER) return alert("System not ready or not logged in.");
+    if(!currentUser || !val || !WINNING_NUMBER) return alert("Error - try again");
 
     db.ref('codes/' + currentUser).once('value').then(s => {
         const d = s.val();
         let status = (String(val).trim() === String(WINNING_NUMBER).trim()) ? "WINNER" : "NOT A MATCH";
-        db.ref('codes/' + currentUser).update({ used: true, guess: val, result: status, winningNumAtTime: WINNING_NUMBER })
+        // Save the correct number at this moment so we can reveal it later
+        db.ref('codes/' + currentUser).update({ used: true, guess: val, result: status, revealedWinNum: WINNING_NUMBER })
         .then(() => {
-            fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, 
-                body: JSON.stringify({ Nickname: d.nickname, Guess: val, Result: status, AccessCode: currentUser }) 
-            });
-            alert("Submitted!");
-            location.reload();
+            fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Nickname: d.nickname, Guess: val, Result: status, Code: currentUser }) });
+            alert("Guess Logged!"); location.reload();
         });
     });
 }
@@ -285,36 +309,25 @@ function submitGuess() {
 function checkUserResult() {
     const checkCode = document.getElementById("resultCheckCode").value.trim();
     const display = document.getElementById("resultDisplay");
-    
     db.ref('codes/' + checkCode).once('value').then(s => {
         const d = s.val();
         if(!d || !d.used) return alert("Result not found.");
-        
         const currentHour = new Date().getHours();
         if (currentHour == d.hour) {
-            display.innerHTML = `<p class="font-bold text-orange-600">⏳ Session live. Come back next hour!</p>`;
+            display.innerHTML = `<p class="font-bold text-orange-600">⏳ Session Live. Wait for next hour!</p>`;
         } else {
             const color = d.result === "WINNER" ? "text-green-600" : "text-red-600";
-            // NEW LOGIC: SHOW THE CORRECT NUMBER
             display.innerHTML = `
                 <p class="font-black text-xl ${color}">${d.result}</p>
-                <p class="text-xs text-slate-500 mt-2">Your Guess: ${d.guess}</p>
-                <p class="text-xs font-bold text-slate-800">Correct Number was: ${d.winningNumAtTime || "N/A"}</p>
+                <p class="text-xs text-slate-500">Your Guess: ${d.guess}</p>
+                <p class="text-xs font-bold text-slate-800">Correct Number was: ${d.revealedWinNum || "???"}</p>
             `;
         }
     });
 }
 
-/* CHAT */
-function toggleChat() { document.getElementById("chatBox").style.display = (document.getElementById("chatBox").style.display === "block") ? "none" : "block"; }
-function sendChat() {
-    const i = document.getElementById("chatInput");
-    if(!i.value) return;
-    const p = document.createElement("p"); p.innerText = "👤 " + i.value;
-    document.getElementById("chatMessages").appendChild(p);
-    i.value = "";
-}
+const winners = [{ name: "BIOSA-4821", prize: "₦2000" }, { name: "EMT-1103", prize: "₦1500" }];
+document.getElementById("board").innerHTML = winners.map(w => `<p class="border-b py-2 text-[10px]">🏆 ${w.name} - ${w.prize}</p>`).join("");
 </script>
 </body>
 </html>
-
