@@ -151,7 +151,8 @@ body {
         </div>
 
         <div class="glass p-6 rounded-2xl shadow-xl mt-5 border-2 border-green-600">
-            <h2 class="font-bold text-center mb-3 text-green-800">CHECK RESULTS</h2>
+            <h2 class="font-bold text-center mb-3 text-green-800 uppercase text-sm">Check Results</h2>
+            <p class="text-[10px] text-center text-slate-500 mb-3">Note: Results are only revealed after the hour ends.</p>
             <input id="resultCheckCode" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter Your Played Code">
             <button onclick="checkUserResult()" class="w-full bg-slate-800 text-white p-3 rounded-xl font-bold">VIEW RESULT</button>
             <div id="resultDisplay" class="mt-3 text-center"></div>
@@ -192,7 +193,7 @@ body {
 </div>
 
 <script>
-// --- FIREBASE ---
+// --- CONFIGURATION ---
 const firebaseConfig = {
   apiKey: "AIzaSyBQDEsK-m8xMjiEksQm3cm_zUY9y2iJ5RU",
   authDomain: "my-jackpot-2cd55.firebaseapp.com",
@@ -268,21 +269,19 @@ function pay() {
             document.getElementById("code").innerText = code;
             alert("Success! Copy your code: " + code);
 
-            db.ref('codes/' + code).set({ nickname, email, paid: true, used: false, hour, ref: data.transaction_id })
+            db.ref('codes/' + code).set({ 
+                nickname, 
+                email, 
+                paid: true, 
+                used: false, 
+                hour: hour, // This tracks which session/hour the code belongs to
+                ref: data.transaction_id 
+            })
             .then(() => {
-                notifyTG(`💰 NEW PAYMENT RECEIVED\n\n👤 Nickname: ${nickname}\n📧 Email: ${email}\n🔑 Access Code: ${code}\n💳 Ref: ${data.transaction_id}\n🕒 Time: ${time}`);
-                fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Status: "PAID", Nickname: nickname, User_Email: email, Access_Code: code, Ref: data.transaction_id, Timestamp: time }) });
+                notifyTG(`💰 NEW PAYMENT\nUser: ${nickname}\nCode: ${code}\nSession: ${hour}:00`);
+                fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Nickname: nickname, Access_Code: code, Ref: data.transaction_id }) });
             });
         }
-    });
-}
-
-function retrieveLostCode() {
-    const refInput = document.getElementById("searchRef").value.trim();
-    const display = document.getElementById("retrievalDisplay");
-    db.ref('codes').once('value').then(snap => {
-        let code = null; snap.forEach(c => { if(c.val().ref == refInput) code = c.key; });
-        display.innerText = code ? "✅ CODE: " + code : "❌ Not found";
     });
 }
 
@@ -305,12 +304,16 @@ function submitGuess() {
     db.ref('codes/' + currentUser).once('value').then(s => {
         const d = s.val();
         let status = (String(val).trim() === String(WINNING_NUMBER).trim()) ? "WINNER" : "NOT A MATCH";
-        const time = new Date().toLocaleString();
         
-        db.ref('codes/' + currentUser).update({ used: true, guess: val, result: status, revealedWinNum: WINNING_NUMBER })
+        // Save the current session's winning number INTO the user's record
+        db.ref('codes/' + currentUser).update({ 
+            used: true, 
+            guess: val, 
+            result: status, 
+            revealedWinNum: WINNING_NUMBER 
+        })
         .then(() => {
-            notifyTG(`🎯 NEW GUESS SUBMISSION\n\n👤 Nickname: ${d.nickname}\n📧 Email: ${d.email}\n🔢 Guess: ${val}\n🏆 Result: ${status}\n🔑 Code: ${currentUser}\n💳 Ref Used: ${d.ref}\n🕒 Time: ${time}`);
-            fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Nickname: d.nickname, Guess: val, Result: status, Code: currentUser, Timestamp: time }) });
+            notifyTG(`🎯 GUESS LOGGED\nUser: ${d.nickname}\nGuess: ${val}\nCode: ${currentUser}`);
             alert("Guess Logged!"); location.reload();
         });
     });
@@ -326,21 +329,27 @@ function checkUserResult() {
 
         const currentHour = new Date().getHours();
         
-        // --- LIVE SESSION PROTECTION ---
-        // If the hour of the code matches the current hour, hide the number.
+        // --- SESSION TRACKING LOGIC ---
+        // If the code was created in the current hour, it's still "Live"
         if (currentHour == d.hour) {
-            display.innerHTML = `<p class="font-bold text-orange-600">⏳ Session Live. Results reveal at the start of the next hour!</p>`;
+            display.innerHTML = `
+                <div class="bg-amber-100 p-3 rounded-xl border border-amber-300">
+                    <p class="font-bold text-amber-800">⏳ SESSION STILL LIVE</p>
+                    <p class="text-[10px] text-amber-700">The winning number for the ${d.hour}:00 session will be revealed when the clock hits the next hour.</p>
+                </div>
+            `;
         } else {
-            // --- PREVIOUS SESSION REVEAL ---
+            // If the hour has passed, reveal the result saved for THAT session
             const color = d.result === "WINNER" ? "text-green-600" : "text-red-600";
-            
-            // Look for the number saved in history first, then live settings as fallback
-            const revealedNum = d.revealedWinNum || WINNING_NUMBER || "Not Available";
+            const winNum = d.revealedWinNum || "???";
             
             display.innerHTML = `
-                <p class="font-black text-xl ${color}">${d.result}</p>
-                <p class="text-xs text-slate-500">Your Guess: ${d.guess}</p>
-                <p class="text-xs font-bold text-slate-800">Correct Number was: ${revealedNum}</p>
+                <div class="bg-white p-4 rounded-xl shadow-inner border border-slate-200">
+                    <p class="font-black text-2xl ${color} mb-1">${d.result}</p>
+                    <p class="text-sm text-slate-500">Your Guess: <span class="font-bold text-slate-800">${d.guess}</span></p>
+                    <p class="text-sm text-slate-500">Winning Number: <span class="font-bold text-green-700">${winNum}</span></p>
+                    <p class="text-[9px] text-slate-400 mt-2 uppercase italic">Session: ${d.hour}:00 - ${d.hour}:59</p>
+                </div>
             `;
         }
     });
