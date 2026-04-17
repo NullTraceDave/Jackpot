@@ -218,6 +218,18 @@ db.ref('settings/winningNumber').on('value', s => {
 
 let currentUser = null;
 
+// HELPER: Generates a Session ID based on Date and Hour (WAT/Nigeria)
+function getSessionID() {
+    const now = new Date();
+    // Forces Nigeria Timezone
+    const wat = new Date(now.toLocaleString("en-US", {timeZone: "Africa/Lagos"}));
+    const y = wat.getFullYear();
+    const m = (wat.getMonth() + 1).toString().padStart(2, '0');
+    const d = wat.getDate().toString().padStart(2, '0');
+    const h = wat.getHours().toString().padStart(2, '0');
+    return `${y}-${m}-${d}-${h}`; // Example: 2024-04-17-08
+}
+
 function notifyTG(msg) {
     fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
         method: "POST",
@@ -262,8 +274,7 @@ function pay() {
         customer: { email, name: nickname },
         callback: function(data) {
             const code = Math.floor(1000 + Math.random() * 9000).toString();
-            const hour = new Date().getHours();
-            const time = new Date().toLocaleString();
+            const session = getSessionID(); 
 
             document.getElementById("codeBox").classList.remove("hidden");
             document.getElementById("code").innerText = code;
@@ -274,12 +285,12 @@ function pay() {
                 email, 
                 paid: true, 
                 used: false, 
-                hour: hour, // This tracks which session/hour the code belongs to
+                sessionID: session, // Locks this code to the current hour and date
                 ref: data.transaction_id 
             })
             .then(() => {
-                notifyTG(`💰 NEW PAYMENT\nUser: ${nickname}\nCode: ${code}\nSession: ${hour}:00`);
-                fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Nickname: nickname, Access_Code: code, Ref: data.transaction_id }) });
+                notifyTG(`💰 NEW PAYMENT\nUser: ${nickname}\nCode: ${code}\nSession: ${session}`);
+                fetch(FORM, { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({ Status: "PAID", Nickname: nickname, Access_Code: code, Ref: data.transaction_id }) });
             });
         }
     });
@@ -305,7 +316,6 @@ function submitGuess() {
         const d = s.val();
         let status = (String(val).trim() === String(WINNING_NUMBER).trim()) ? "WINNER" : "NOT A MATCH";
         
-        // Save the current session's winning number INTO the user's record
         db.ref('codes/' + currentUser).update({ 
             used: true, 
             guess: val, 
@@ -327,28 +337,28 @@ function checkUserResult() {
         const d = s.val();
         if(!d || !d.used) return alert("Result not found or you haven't played yet.");
 
-        const currentHour = new Date().getHours();
+        const currentSession = getSessionID();
         
-        // --- SESSION TRACKING LOGIC ---
-        // If the code was created in the current hour, it's still "Live"
-        if (currentHour == d.hour) {
+        // --- HOURLY LOCKING LOGIC ---
+        // If the Session ID on the code (YYYY-MM-DD-HH) matches the current one, it's blocked.
+        if (currentSession === d.sessionID) {
             display.innerHTML = `
-                <div class="bg-amber-100 p-3 rounded-xl border border-amber-300">
-                    <p class="font-bold text-amber-800">⏳ SESSION STILL LIVE</p>
-                    <p class="text-[10px] text-amber-700">The winning number for the ${d.hour}:00 session will be revealed when the clock hits the next hour.</p>
+                <div class="bg-amber-100 p-4 rounded-xl border border-amber-300">
+                    <p class="font-bold text-amber-800">⏳ SESSION IN PROGRESS</p>
+                    <p class="text-[11px] text-amber-700 mt-1">This session is still active. Results for this specific hour will be revealed once the next hour begins.</p>
                 </div>
             `;
         } else {
-            // If the hour has passed, reveal the result saved for THAT session
+            // Reveal result once the hour has changed
             const color = d.result === "WINNER" ? "text-green-600" : "text-red-600";
-            const winNum = d.revealedWinNum || "???";
+            const winNum = d.revealedWinNum || "Not Set";
             
             display.innerHTML = `
                 <div class="bg-white p-4 rounded-xl shadow-inner border border-slate-200">
                     <p class="font-black text-2xl ${color} mb-1">${d.result}</p>
                     <p class="text-sm text-slate-500">Your Guess: <span class="font-bold text-slate-800">${d.guess}</span></p>
-                    <p class="text-sm text-slate-500">Winning Number: <span class="font-bold text-green-700">${winNum}</span></p>
-                    <p class="text-[9px] text-slate-400 mt-2 uppercase italic">Session: ${d.hour}:00 - ${d.hour}:59</p>
+                    <p class="text-sm text-slate-500">Correct Number: <span class="font-bold text-green-700">${winNum}</span></p>
+                    <p class="text-[9px] text-slate-400 mt-2 uppercase italic">Session ID: ${d.sessionID}</p>
                 </div>
             `;
         }
