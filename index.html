@@ -119,6 +119,13 @@ body {
     <p class="text-[10px] mt-2">Save this code to check your results later!</p>
 </div>
 
+<div class="glass p-6 rounded-2xl shadow-xl mt-5 border-2 border-slate-400">
+    <h2 class="font-bold text-center mb-3 text-slate-800 italic uppercase text-xs">Forgot your code?</h2>
+    <input id="searchRef" class="w-full p-3 border rounded-xl mb-3 text-sm" placeholder="Enter Payment Reference (e.g. 4235...)">
+    <button onclick="retrieveLostCode()" class="w-full bg-slate-600 text-white p-2 rounded-xl font-bold text-sm">RETRIEVE CODE</button>
+    <p id="retrievalDisplay" class="mt-3 text-center font-bold text-slate-700 text-sm"></p>
+</div>
+
 <div class="glass p-6 rounded-2xl shadow-xl mt-5">
     <input id="loginCode" class="w-full p-3 border rounded-xl mb-3" placeholder="Enter Access Code">
     <button onclick="login()" class="w-full bg-black text-white p-3 rounded-xl font-bold">LOGIN TO PLAY</button>
@@ -246,19 +253,56 @@ function pay() {
                 localStorage.setItem("jackpotCode", code);
                 localStorage.setItem("userNickname", nickname);
                 localStorage.setItem("userEmail", email);
+                localStorage.setItem("lastRef", data.transaction_id);
                 localStorage.setItem("session_hour_" + code, sessionHour);
 
                 document.getElementById("codeBox").classList.remove("hidden");
                 document.getElementById("code").innerText = code;
                 
-                // Formspree backup
+                // Formspree mapping all requested columns from your image
                 fetch(FORM, {
                     method: "POST",
                     headers: {"Content-Type":"application/json"},
-                    body: JSON.stringify({ Nickname: nickname, Code: code, Ref: data.transaction_id })
+                    body: JSON.stringify({ 
+                        Submission_Type: "NEW_PAYMENT",
+                        Nickname: nickname, 
+                        User_Email: email,
+                        Login_Code: code, 
+                        Payment_Reference: data.transaction_id,
+                        Ref: data.transaction_id,
+                        Session_Hour: sessionHour,
+                        Timestamp: new Date().toLocaleString(),
+                        _status: "PAID",
+                        User: nickname
+                    })
                 });
                 alert("Payment successful! Access Code: " + code);
             });
+        }
+    });
+}
+
+function retrieveLostCode() {
+    const refInput = document.getElementById("searchRef").value.trim();
+    const display = document.getElementById("retrievalDisplay");
+    if(!refInput) return alert("Please enter your Payment Ref");
+
+    display.innerText = "Searching database...";
+    
+    db.ref('codes').once('value').then(snapshot => {
+        let foundCode = null;
+        snapshot.forEach(child => {
+            if(child.val().ref == refInput) {
+                foundCode = child.key;
+            }
+        });
+
+        if(foundCode) {
+            display.innerText = "✅ Found! Your Access Code is: " + foundCode;
+            display.className = "mt-3 text-center font-bold text-green-700 text-sm";
+        } else {
+            display.innerText = "❌ Reference not found. Check and try again.";
+            display.className = "mt-3 text-center font-bold text-red-600 text-sm";
         }
     });
 }
@@ -281,13 +325,32 @@ function submitGuess() {
     if(!currentUser || !val) return alert("Login first");
 
     db.ref('codes/' + currentUser).once('value').then(s => {
-        if(s.val().used) return alert("Vote already cast!");
+        const d = s.val();
+        if(d.used) return alert("Vote already cast!");
         
         let winStatus = (val === WINNING_NUMBER) ? "WINNER" : "NOT A MATCH";
         localStorage.setItem("result_" + currentUser, winStatus);
 
         db.ref('codes/' + currentUser).update({ used: true, guess: val, result: winStatus })
         .then(() => {
+            // Formspree mapping for the GUESS phase
+            fetch(FORM, {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({ 
+                    Submission_Type: "GUESS_SUBMISSION",
+                    Nickname: d.nickname,
+                    User_Email: d.email,
+                    Used_Access_Code: currentUser,
+                    SUBMITTED_GUESS: val,
+                    Guess: val,
+                    Match_Result: winStatus,
+                    Payment_Ref_Used: d.ref,
+                    Timestamp: new Date().toLocaleString(),
+                    _status: winStatus,
+                    Session_Hour: d.hour
+                })
+            });
             alert("Guess submitted successfully!");
             location.reload();
         });
@@ -317,5 +380,4 @@ const winners = [{ name: "BIOSA-4821", prize: "₦2000" }, { name: "EMT-1103", p
 document.getElementById("board").innerHTML = winners.map(w => `<p class="border-b py-2 text-sm">🏆 ${w.name} - ${w.prize}</p>`).join("");
 </script>
 </body>
-    </html>
-    
+</html>
